@@ -29,6 +29,26 @@ AEnemy::AEnemy()
     HealthBarWidget->SetDrawSize(FVector2D(200.f, 40.f));
 }
 
+//void AEnemy::BeginPlay()
+//{
+//    Super::BeginPlay();
+//
+//    if (!Controller) SpawnDefaultController();
+//    GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+//
+//    if (UUserWidget* Widget = HealthBarWidget->GetUserWidgetObject())
+//        if (UProgressBar* Bar = Cast<UProgressBar>(Widget->GetWidgetFromName(TEXT("EnemyHealth"))))
+//            Bar->SetPercent(CurrentHealth / MaxHealth);
+//
+//    TArray<AActor*> Found;
+//    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemyTargetPoint::StaticClass(), Found);
+//    for (AActor* P : Found)
+//        if (auto* TP = Cast<ASpawnEnemyTargetPoint>(P))
+//            PatrolPoints.Add(TP);
+//
+//
+//}
+
 void AEnemy::BeginPlay()
 {
     Super::BeginPlay();
@@ -45,7 +65,17 @@ void AEnemy::BeginPlay()
     for (AActor* P : Found)
         if (auto* TP = Cast<ASpawnEnemyTargetPoint>(P))
             PatrolPoints.Add(TP);
+
+    UE_LOG(LogTemp, Warning, TEXT("[ENEMY] PatrolPoints.Num = %d"), PatrolPoints.Num());
+    for (int32 i = 0; i < PatrolPoints.Num(); ++i)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[ENEMY] PatrolPoint[%d] = %s  Loc=%s"),
+            i,
+            *PatrolPoints[i]->GetName(),
+            *PatrolPoints[i]->GetActorLocation().ToString());
+    }
 }
+
 
 void AEnemy::Tick(float DeltaSeconds)
 {
@@ -66,7 +96,7 @@ void AEnemy::MoveAlongPatrol(float DeltaSeconds)
     FVector Dir = TargetLoc - MyLoc;
     float Dist = Dir.Size();
 
-    if (Dist < 80.f)
+   /* if (Dist < 80.f)
     {
         if (bCanAttack && !bIsAttacking)
         {
@@ -86,7 +116,21 @@ void AEnemy::MoveAlongPatrol(float DeltaSeconds)
                 }, 1.0f, false); 
         }
         return;
+    }*/
+    if (Dist < 80.f)
+    {
+        // Завжди міняємо точку патруля
+        CurrentPatrolIndex = (CurrentPatrolIndex + 1) % PatrolPoints.Num();
+
+        // Атакуємо незалежно
+        if (bCanAttack && !bIsAttacking)
+        {
+            TryAttack();
+        }
+
+        return;
     }
+
 
     Dir.Normalize();
     AddMovementInput(Dir, 1.0f);

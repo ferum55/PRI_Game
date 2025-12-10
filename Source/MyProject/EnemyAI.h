@@ -33,7 +33,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float EffectiveRange = 1000.f;
 	UPROPERTY(EditAnywhere, Category = "UI")
-	float HealthBarHeightOffset = 100.f; // підніми якщо треба вище
+	float HealthBarHeightOffset = 50.f; // підніми якщо треба вище
 
 
 protected:

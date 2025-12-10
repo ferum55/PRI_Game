@@ -5,6 +5,7 @@
 #include "PoisonZone.generated.h"
 
 class UBoxComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class APoisonZone : public AActor
@@ -20,11 +21,18 @@ protected:
     UPROPERTY(VisibleAnywhere)
     UBoxComponent* Box;
 
-    UFUNCTION()
-    void OnOverlapBegin(UPrimitiveComponent* Comp, AActor* Other, UPrimitiveComponent* OtherComp,
-        int32 BodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+    UPROPERTY(VisibleAnywhere)
+    UStaticMeshComponent* ZoneMesh;
+    UPROPERTY()
+    UMaterialInterface* GreenMat;
+
 
     UFUNCTION()
-    void OnOverlapEnd(UPrimitiveComponent* Comp, AActor* Other, UPrimitiveComponent* OtherComp,
-        int32 BodyIndex);
+    void OnOverlapBegin(UPrimitiveComponent* Comp, AActor* Other,
+        UPrimitiveComponent* OtherComp, int32 BodyIndex,
+        bool bFromSweep, const FHitResult& SweepResult);
+
+    UFUNCTION()
+    void OnOverlapEnd(UPrimitiveComponent* Comp, AActor* Other,
+        UPrimitiveComponent* OtherComp, int32 BodyIndex);
 };
