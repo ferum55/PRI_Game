@@ -281,32 +281,24 @@ void AMainCharacter::Fire()
     float AimConeDeg = 5.f;
     float AimConeDot = FMath::Cos(FMath::DegreesToRadians(AimConeDeg));
 
-    // ----------------------------------------
-    // DEBUG DRAW: main ray
-    // ----------------------------------------
-    DrawDebugLine(
-        GetWorld(),
-        CamLoc,
-        CamLoc + AimDir * MaxAimDistance,
-        FColor::Green,
-        false,
-        0.2f,
-        0,
-        1.f
-    );
+    //DrawDebugLine(
+    //    GetWorld(),
+    //    CamLoc,
+    //    CamLoc + AimDir * MaxAimDistance,
+    //    FColor::Green,
+    //    false,
+    //    0.2f,
+    //    0,
+    //    1.f
+    //);
 
-    // ----------------------------------------
-    // DEBUG DRAW: cone edges
-    // ----------------------------------------
+
     FVector RightEdge = AimDir.RotateAngleAxis(AimConeDeg, FVector::UpVector);
     FVector LeftEdge = AimDir.RotateAngleAxis(-AimConeDeg, FVector::UpVector);
 
-    DrawDebugLine(GetWorld(), CamLoc, CamLoc + RightEdge * 3000.f, FColor::Yellow, false, 0.2f, 0, 1.f);
-    DrawDebugLine(GetWorld(), CamLoc, CamLoc + LeftEdge * 3000.f, FColor::Yellow, false, 0.2f, 0, 1.f);
+    //DrawDebugLine(GetWorld(), CamLoc, CamLoc + RightEdge * 3000.f, FColor::Yellow, false, 0.2f, 0, 1.f);
+    //DrawDebugLine(GetWorld(), CamLoc, CamLoc + LeftEdge * 3000.f, FColor::Yellow, false, 0.2f, 0, 1.f);
 
-    // ----------------------------------------
-    // CONE CHECK
-    // ----------------------------------------
     TArray<AActor*> EnemyActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemyAI::StaticClass(), EnemyActors);
 
@@ -321,8 +313,7 @@ void AMainCharacter::Fire()
 
         if (Dot >= AimConeDot)
         {
-            // DEBUG line to enemy
-            DrawDebugLine(
+           /* DrawDebugLine(
                 GetWorld(),
                 CamLoc,
                 Actor->GetActorLocation(),
@@ -331,7 +322,7 @@ void AMainCharacter::Fire()
                 0.2f,
                 0,
                 1.f
-            );
+            );*/
 
             if (AEnemyAI* Enemy = Cast<AEnemyAI>(Actor))
             {
@@ -340,9 +331,6 @@ void AMainCharacter::Fire()
         }
     }
 
-    // ----------------------------------------
-    // Projectile Spawn (твій код)
-    // ----------------------------------------
 
     FVector CameraLocation = CamLoc;
     FRotator CameraRotation = CamRot;

@@ -17,13 +17,12 @@ EBTNodeResult::Type UBTTask_SetPatrolLocation::ExecuteTask(UBehaviorTreeComponen
     APawn* ControlledPawn = Controller->GetPawn();
     if (!ControlledPawn) return EBTNodeResult::Failed;
 
-    // Отримуємо навігаційну систему
     UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(ControlledPawn->GetWorld());
     if (!NavSystem) return EBTNodeResult::Failed;
 
     FNavLocation ResultLocation;
 
-    // Шукаємо випадкову точку поблизу NPC
+
     bool Found = NavSystem->GetRandomPointInNavigableRadius(
         ControlledPawn->GetActorLocation(),
         PatrolRadius,
@@ -32,7 +31,7 @@ EBTNodeResult::Type UBTTask_SetPatrolLocation::ExecuteTask(UBehaviorTreeComponen
 
     if (!Found) return EBTNodeResult::Failed;
 
-    // Записуємо точку у Blackboard
+
     Controller->GetBlackboardComponent()->SetValueAsVector("PatrolLocation", ResultLocation.Location);
 
     return EBTNodeResult::Succeeded;

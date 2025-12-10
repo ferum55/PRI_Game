@@ -10,6 +10,7 @@ UBTTask_Patrol::UBTTask_Patrol()
 
 EBTNodeResult::Type UBTTask_Patrol::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
+    UE_LOG(LogTemp, Warning, TEXT("Patrolling!"));
     AEnemyController* Controller = Cast<AEnemyController>(OwnerComp.GetAIOwner());
     if (!Controller) return EBTNodeResult::Failed;
 
