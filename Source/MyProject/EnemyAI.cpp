@@ -9,6 +9,27 @@
 #include "Components/ProgressBar.h"
 #include "Animation/AnimInstance.h"
 
+
+FGenericTeamId AEnemyAI::GetGenericTeamId() const
+{
+    return FGenericTeamId(static_cast<uint8>(Team));
+}
+
+ETeamAttitude::Type AEnemyAI::GetTeamAttitudeTowards(const AActor& Other) const
+{
+    if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(&Other))
+    {
+        FGenericTeamId OtherTeamId = TeamAgent->GetGenericTeamId();
+
+        if (OtherTeamId.GetId() == static_cast<uint8>(ETeams::PlayersTeam))
+        {
+            return ETeamAttitude::Hostile;
+        }
+    }
+
+    return ETeamAttitude::Neutral;
+}
+
 AEnemyAI::AEnemyAI()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -130,6 +151,41 @@ void AEnemyAI::Tick(float DeltaTime)
             }
         }
     }
+    if (!bHasLineOfSight)
+    {
+        TargetLostElapsed += DeltaTime;
+
+        if (TargetLostElapsed >= 4.f) // 4 секунди не бачить гравц€
+        {
+            if (Controller)
+            {
+                if ((BB = Controller->GetBlackboardComponent()))
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("[AI] LOST PLAYER FOR 4 SEC Ц CLEARING BLACKBOARD"));
+
+                    BB->ClearValue(Controller->GetDetectedEnemyKey());
+                    BB->ClearValue(Controller->GetHasLineOfSightKey());
+                    BB->ClearValue(Controller->GetLastKnownLocationKey());
+                }
+            }
+
+            PerceivedActor = nullptr;
+            bHasLineOfSight = false;
+            TargetLostElapsed = 0.f; // reset timer
+        }
+    }
+    // ---------------------------
+// FIX HEALTH BAR FLOATING
+// ---------------------------
+    if (HealthBarWidget)
+    {
+        FVector HeadLocation = GetMesh()->GetSocketLocation(TEXT("Bip01_HeadNub"));
+        HeadLocation.Z += HealthBarHeightOffset; // офсет вгору
+
+        HealthBarWidget->SetWorldLocation(HeadLocation);
+    }
+
+
 }
 
 void AEnemyAI::Walk()
@@ -209,25 +265,7 @@ void AEnemyAI::OnActorPerceived(AActor* Actor, FAIStimulus Stimulus)
     }
 }
 
-FGenericTeamId AEnemyAI::GetGenericTeamId() const
-{
-    return FGenericTeamId(static_cast<uint8>(Team));
-}
 
-ETeamAttitude::Type AEnemyAI::GetTeamAttitudeTowards(const AActor& Other) const
-{
-    if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(&Other))
-    {
-        FGenericTeamId OtherTeamId = TeamAgent->GetGenericTeamId();
-
-        if (OtherTeamId.GetId() == static_cast<uint8>(ETeams::PlayersTeam))
-        {
-            return ETeamAttitude::Hostile;
-        }
-    }
-
-    return ETeamAttitude::Neutral;
-}
 
 void AEnemyAI::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
