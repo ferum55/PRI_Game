@@ -612,14 +612,6 @@ void AMainCharacter::ToggleCameraMode()
     }
     else
     {
-        UE_LOG(LogTemp, Warning,
-            TEXT("TP Camera | Yaw=%f Pitch=%f | BoomRot=%s | CamRot=%s | UsePCR=%s"),
-            TP_Yaw,
-            TP_Pitch,
-            *CameraBoom->GetComponentRotation().ToString(),
-            *Camera->GetComponentRotation().ToString(),
-            Camera->bUsePawnControlRotation ? TEXT("YES") : TEXT("NO")
-        );
         CameraMode = ECameraMode::FirstPerson;
 
         Camera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
