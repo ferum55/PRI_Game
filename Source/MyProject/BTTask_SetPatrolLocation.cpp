@@ -10,7 +10,6 @@ UBTTask_SetPatrolLocation::UBTTask_SetPatrolLocation()
 
 EBTNodeResult::Type UBTTask_SetPatrolLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Patrol Location Called!"));
     AEnemyController* Controller = Cast<AEnemyController>(OwnerComp.GetAIOwner());
     if (!Controller) return EBTNodeResult::Failed;
 

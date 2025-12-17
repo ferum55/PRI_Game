@@ -10,7 +10,6 @@ UBTTask_Patrol::UBTTask_Patrol()
 
 EBTNodeResult::Type UBTTask_Patrol::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Patrolling!"));
     AEnemyController* Controller = Cast<AEnemyController>(OwnerComp.GetAIOwner());
     if (!Controller) return EBTNodeResult::Failed;
 
@@ -26,7 +25,6 @@ EBTNodeResult::Type UBTTask_Patrol::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 
     if (NavSys->GetRandomReachablePointInRadius(Controller->GetNavAgentLocation(), PatrolRadius, ResultLocation))
     {
-        // Мінімальна заміна: використовуємо BlackboardKeySelector
         BB->SetValueAsVector(PatrolTargetKey.SelectedKeyName, ResultLocation.Location);
 
         return EBTNodeResult::Succeeded;

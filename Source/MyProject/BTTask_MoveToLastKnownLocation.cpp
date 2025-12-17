@@ -11,8 +11,6 @@ UBTTask_MoveToLastKnownLocation::UBTTask_MoveToLastKnownLocation()
 
 EBTNodeResult::Type UBTTask_MoveToLastKnownLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	UE_LOG(LogTemp, Warning, TEXT("MoveToLastKnownLocation EXECUTED"));
-
 	AEnemyController* Controller = Cast<AEnemyController>(OwnerComp.GetAIOwner());
 	if (!Controller) return EBTNodeResult::Failed;
 

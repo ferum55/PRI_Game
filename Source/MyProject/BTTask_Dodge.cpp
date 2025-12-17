@@ -25,9 +25,6 @@ EBTNodeResult::Type UBTTask_Dodge::ExecuteTask(UBehaviorTreeComponent& OwnerComp
     float Side = FMath::RandBool() ? 1.f : -1.f;
     DodgeDirection = Enemy->GetActorRightVector() * Side;
 
-    UE_LOG(LogTemp, Warning, TEXT("[DODGE_TASK] Enemy dodging %s"),
-        Side > 0 ? TEXT("RIGHT") : TEXT("LEFT"));
-
     Elapsed = 0.f;
 
     return EBTNodeResult::InProgress;
@@ -49,12 +46,8 @@ void UBTTask_Dodge::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
     {
         Enemy->bIsDodging = false;
 
-        // --------------------------------------------------
-        // RESET BLACKBOARD
-        // --------------------------------------------------
         OwnerComp.GetBlackboardComponent()->SetValueAsBool("ShouldDodge", false);
 
-        UE_LOG(LogTemp, Warning, TEXT("[DODGE_TASK] Dodge finished ? ShouldDodge reset"));
 
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
     }

@@ -54,8 +54,7 @@ void AEnemyAI::BeginPlay()
     Controller = Cast<AEnemyController>(GetController());
     if (Controller)
     {
-        UE_LOG(LogTemp, Warning, TEXT("AI: Controller successfully casted in BeginPlay."));
-        UE_LOG(LogTemp, Warning, TEXT("AI: TargetLostTime is %f"), TargetLostTime);
+
     }
     else
     {
@@ -67,27 +66,14 @@ void AEnemyAI::BeginPlay()
     WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
     RunSpeed = WalkSpeed * 2;
 
-    UE_LOG(LogTemp, Error, TEXT("[HP_UI] BeginPlay: WidgetComponent = %s"),
-        HealthBarWidget ? TEXT("VALID") : TEXT("NULL"));
-
     if (UUserWidget* Widget = HealthBarWidget->GetUserWidgetObject())
     {
-        UE_LOG(LogTemp, Warning, TEXT("[HP_UI] UserWidget FOUND: %s"), *Widget->GetName());
 
         UProgressBar* Bar = Cast<UProgressBar>(Widget->GetWidgetFromName(TEXT("EnemyHealth")));
         if (Bar)
         {
-            UE_LOG(LogTemp, Warning, TEXT("[HP_UI] ProgressBar FOUND -> setting %.2f"), CurrentHealth / MaxHealth);
             Bar->SetPercent(CurrentHealth / MaxHealth);
         }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("[HP_UI] ProgressBar NOT FOUND! Name mismatch?"));
-        }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("[HP_UI] UserWidget NOT FOUND! Maybe not set in Blueprint?"));
     }
 
     if (WeaponClass)
@@ -146,7 +132,6 @@ void AEnemyAI::Tick(float DeltaTime)
         {
             if (BB->GetValueAsBool(Controller->GetHasLineOfSightKey()))
             {
-                UE_LOG(LogTemp, Warning, TEXT("[AI] REAL LOS LOST Ц switching to LKL"));
                 BB->SetValueAsBool(Controller->GetHasLineOfSightKey(), false);
             }
         }
@@ -155,14 +140,12 @@ void AEnemyAI::Tick(float DeltaTime)
     {
         TargetLostElapsed += DeltaTime;
 
-        if (TargetLostElapsed >= 4.f) // 4 секунди не бачить гравц€
+        if (TargetLostElapsed >= 4.f) 
         {
             if (Controller)
             {
                 if ((BB = Controller->GetBlackboardComponent()))
                 {
-                    UE_LOG(LogTemp, Warning, TEXT("[AI] LOST PLAYER FOR 4 SEC Ц CLEARING BLACKBOARD"));
-
                     BB->ClearValue(Controller->GetDetectedEnemyKey());
                     BB->ClearValue(Controller->GetHasLineOfSightKey());
                     BB->ClearValue(Controller->GetLastKnownLocationKey());
@@ -171,16 +154,14 @@ void AEnemyAI::Tick(float DeltaTime)
 
             PerceivedActor = nullptr;
             bHasLineOfSight = false;
-            TargetLostElapsed = 0.f; // reset timer
+            TargetLostElapsed = 0.f; 
         }
     }
-    // ---------------------------
-// FIX HEALTH BAR FLOATING
-// ---------------------------
+
     if (HealthBarWidget)
     {
         FVector HeadLocation = GetMesh()->GetSocketLocation(TEXT("Bip01_HeadNub"));
-        HeadLocation.Z += HealthBarHeightOffset; // офсет вгору
+        HeadLocation.Z += HealthBarHeightOffset;
 
         HealthBarWidget->SetWorldLocation(HeadLocation);
     }
@@ -192,21 +173,16 @@ void AEnemyAI::Walk()
 {
     bIsRunning = false;
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-    UE_LOG(LogTemp, Warning, TEXT("EnemyAI: Walk() called. Speed=%f"), GetCharacterMovement()->MaxWalkSpeed);
 }
 
 void AEnemyAI::Run()
 {
     bIsRunning = true;
     GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
-    UE_LOG(LogTemp, Warning, TEXT("EnemyAI: Run() called. Speed=%f"), GetCharacterMovement()->MaxWalkSpeed);
 }
 
 void AEnemyAI::OnActorPerceived(AActor* Actor, FAIStimulus Stimulus)
 {
-    UE_LOG(LogTemp, Warning, TEXT("OnActorPerceived CALLED. Actor = %s, SuccessSensed=%d"),
-        Actor ? *Actor->GetName() : TEXT("NULL"),
-        Stimulus.WasSuccessfullySensed() ? 1 : 0);
 
     if (!Actor) return;
 
@@ -237,11 +213,6 @@ void AEnemyAI::OnActorPerceived(AActor* Actor, FAIStimulus Stimulus)
 
         if (bHit && Hit.GetActor() != Actor)
         {
-            UE_LOG(LogTemp, Warning,
-                TEXT("[AI LOS] BLOCKED by %s | Comp=%s"),
-                *GetNameSafe(Hit.GetActor()),
-                *GetNameSafe(Hit.GetComponent()));
-
             bHasLineOfSight = false;
             TargetLostElapsed = 0.f;
             return;
@@ -260,8 +231,6 @@ void AEnemyAI::OnActorPerceived(AActor* Actor, FAIStimulus Stimulus)
     {
         bHasLineOfSight = false;
         TargetLostElapsed = 0.f;
-
-        UE_LOG(LogTemp, Warning, TEXT("[AI] LOS flicker Ц grace period started"));
     }
 }
 
@@ -274,11 +243,9 @@ void AEnemyAI::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AEnemyAI::ShootProjectileAtPlayer()
 {
-    UE_LOG(LogTemp, Warning, TEXT("EnemyAI: ShootProjectileAtPlayer CALLED"));
 
     if (!ProjectileClass)
     {
-        UE_LOG(LogTemp, Error, TEXT("EnemyAI: ProjectileClass is NULL"));
         return;
     }
 
@@ -324,7 +291,6 @@ void AEnemyAI::ShootProjectileAtPlayer()
             Move->Velocity = Rot.Vector() * ProjectileSpeed;
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("EnemyAI: Projectile spawned OK"));
     }
     else
     {
@@ -376,9 +342,6 @@ void AEnemyAI::Dodge()
     FVector Right = GetActorRightVector() * Dir;
     FVector Target = GetActorLocation() + Right * DodgeDistance;
 
-    UE_LOG(LogTemp, Warning, TEXT("[DODGE] Executing dodge to %s"),
-        Dir > 0 ? TEXT("RIGHT") : TEXT("LEFT"));
-
     GetCharacterMovement()->Velocity = Right * DodgeSpeed;
 
     GetWorld()->GetTimerManager().SetTimer(
@@ -403,22 +366,16 @@ void AEnemyAI::OnPlayerAimedShot(float ProjectileSpd)
 
     float Chance = ComputeDodgeChance(Dist);
 
-    UE_LOG(LogTemp, Warning, TEXT("[DODGE] Dist=%.0f  Chance=%.2f"), Dist, Chance);
-
  
     if (FMath::FRand() > Chance)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[DODGE] Chance failed"));
         return;
     }
 
     if (bIsDodging)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[DODGE] Already dodging"));
         return;
     }
-
-    UE_LOG(LogTemp, Warning, TEXT("[DODGE] Dodge triggered!"));
 
     Controller->GetBlackboardComponent()->SetValueAsBool("ShouldDodge", true);
 }
@@ -437,22 +394,13 @@ float AEnemyAI::ComputeDodgeChance(float Distance) const
 
 void AEnemyAI::SetHealth(float NewHealth)
 {
-    /*CurrentHealth = FMath::Clamp(NewHealth, 0.f, MaxHealth);
-
-    if (UUserWidget* Widget = HealthBarWidget->GetUserWidgetObject())
-        if (UProgressBar* Bar = Cast<UProgressBar>(Widget->GetWidgetFromName(TEXT("EnemyHealth"))))
-            Bar->SetPercent(CurrentHealth / MaxHealth);*/
-
-    UE_LOG(LogTemp, Warning, TEXT("[HP] SetHealth CALLED -> NewHealth=%.1f"), NewHealth);
 
     CurrentHealth = FMath::Clamp(NewHealth, 0.f, MaxHealth);
 
-    UE_LOG(LogTemp, Warning, TEXT("[HP] After clamp -> %.1f / %.1f"), CurrentHealth, MaxHealth);
 
     UUserWidget* Widget = HealthBarWidget->GetUserWidgetObject();
     if (!Widget)
     {
-        UE_LOG(LogTemp, Error, TEXT("[HP_UI] SetHealth: UserWidget = NULL"));
         return;
     }
 
@@ -463,18 +411,15 @@ void AEnemyAI::SetHealth(float NewHealth)
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("[HP_UI] Updating ProgressBar ? %.2f"), CurrentHealth / MaxHealth);
         Bar->SetPercent(CurrentHealth / MaxHealth);
     }
 
     if (CurrentHealth > 0.f)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[HP_ANIM] Playing Hit Reaction"));
         PlayHitReaction_BP();
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("[HP_ANIM] Playing Death Animation"));
         if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
         {
             Anim->Montage_Stop(0.1f);
@@ -499,9 +444,6 @@ void AEnemyAI::ApplyPoison()
     float NewSpeed = (bIsRunning ? RunSpeed : WalkSpeed) * PoisonSlowMultiplier;
     GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
 
-    UE_LOG(LogTemp, Warning, TEXT("[POISON] Enemy slowed to %.0f"), NewSpeed);
-
-    // Start damage over time
     GetWorld()->GetTimerManager().SetTimer(
         PoisonDamageTimer,
         this,
@@ -510,7 +452,6 @@ void AEnemyAI::ApplyPoison()
         true
     );
 
-    UE_LOG(LogTemp, Warning, TEXT("[POISON] DOT started (1 HP per sec)"));
 }
 
 void AEnemyAI::RemovePoison()
@@ -522,9 +463,6 @@ void AEnemyAI::RemovePoison()
 
     float RestoredSpeed = bIsRunning ? RunSpeed : WalkSpeed;
     GetCharacterMovement()->MaxWalkSpeed = RestoredSpeed;
-
-    UE_LOG(LogTemp, Warning, TEXT("[POISON] Speed restored to %.0f"), RestoredSpeed);
-
     GetWorld()->GetTimerManager().ClearTimer(PoisonDamageTimer);
 }
 
@@ -534,8 +472,6 @@ void AEnemyAI::PoisonTick()
         return;
 
     float NewHP = CurrentHealth - PoisonDamagePerTick;
-    UE_LOG(LogTemp, Warning, TEXT("[POISON] Damage tick: -%.0f HP"), PoisonDamagePerTick);
-
     SetHealth(NewHP);
 
     if (CurrentHealth <= 0.f)

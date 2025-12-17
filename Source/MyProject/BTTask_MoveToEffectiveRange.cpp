@@ -44,7 +44,6 @@ EBTNodeResult::Type UBTTask_MoveToEffectiveRange::ExecuteTask(UBehaviorTreeCompo
 			Enemy->GetCharacterMovement()->StopMovementImmediately();
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("MoveToEffectiveRange: EXECUTE -> ALREADY IN RANGE. Dst=%f. SUCCESS and STOPPED."), Distance);
 		return EBTNodeResult::Succeeded;
 	}
 
@@ -59,8 +58,6 @@ EBTNodeResult::Type UBTTask_MoveToEffectiveRange::ExecuteTask(UBehaviorTreeCompo
 		Enemy->Run();
 
 		FPathFollowingRequestResult MoveResult = Controller->MoveTo(Request);
-
-		UE_LOG(LogTemp, Warning, TEXT("MoveToEffectiveRange: EXECUTE -> MOVEMENT STARTED. TargetRangeMax=%f"), AttackZoneMax);
 
 		if (MoveResult.Code == EPathFollowingRequestResult::RequestSuccessful)
 		{
@@ -127,7 +124,6 @@ void UBTTask_MoveToEffectiveRange::TickTask(UBehaviorTreeComponent& OwnerComp, u
 			Enemy->GetCharacterMovement()->StopMovementImmediately();
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("MoveToEffectiveRange: Target reached (%f). SUCCESS and STOPPED."), Distance);
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		return;
 	}
@@ -136,7 +132,6 @@ void UBTTask_MoveToEffectiveRange::TickTask(UBehaviorTreeComponent& OwnerComp, u
 
 	if (Controller->GetMoveStatus() == EPathFollowingStatus::Idle)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MoveToEffectiveRange: Controller is Idle (Stuck/Cannot Find Path). FAILED."));
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 		return;
 	}

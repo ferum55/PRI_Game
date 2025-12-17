@@ -1,5 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
+﻿
 
 #include "MainCharacter.h"
 #include "Camera/CameraComponent.h"
@@ -14,6 +13,10 @@
 #include "EnemyAI.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "Animation/AnimMontage.h"
+#include "GameFramework/SpringArmComponent.h"
+
+
 
 
 
@@ -42,7 +45,7 @@ AMainCharacter::AMainCharacter()
     }
 
     static ConstructorHelpers::FClassFinder<UAnimInstance> AnimBPClass(
-        TEXT("/Game/AnimRetargeted/BP_AnimMainCharacter.BP_AnimMainCharacter_C")
+        TEXT("/Game/AnimsCharacter/BP_AnimMainCharacter.BP_AnimMainCharacter_C")
     );
     if (AnimBPClass.Succeeded())
     {
@@ -77,7 +80,7 @@ AMainCharacter::AMainCharacter()
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
     GetCharacterMovement()->bCrouchMaintainsBaseLocation = true;
     static ConstructorHelpers::FClassFinder<AActor> WeaponBP(
-        TEXT("/Game/FPS_Weapon_Bundle/BP_KA74U.BP_KA74U_C") 
+        TEXT("/Game/FPS_Weapon_Bundle/BP_AK74U.BP_AK74U_C") 
     );
     if (WeaponBP.Succeeded())
     {
@@ -100,7 +103,18 @@ AMainCharacter::AMainCharacter()
     }
     PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
     
+    static ConstructorHelpers::FObjectFinder<UAnimMontage> ReloadMontageRef(
+        TEXT("/Game/Anims/AM_Reload.AM_Reload")
+    );
 
+    if (ReloadMontageRef.Succeeded())
+    {
+        ReloadMontage = ReloadMontageRef.Object;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Reload montage not found"));
+    }
 }
 
 
@@ -108,7 +122,8 @@ void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
  
-    
+    UE_LOG(LogTemp, Warning, TEXT("Pawn class: %s"), *GetClass()->GetName());
+
         
     if (IsLocallyControlled())
     {
@@ -161,6 +176,8 @@ void AMainCharacter::BeginPlay()
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
     GetCapsuleComponent()->SetGenerateOverlapEvents(true);
     SetCanBeDamaged(true);
+    DefaultCameraOffset = Camera->GetRelativeLocation();
+    Camera->SetRelativeLocation(DefaultCameraOffset + FVector(-8.f, 0.f, 0.f));
 
 }
 
@@ -205,7 +222,17 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     PlayerInputComponent->BindAction("Grab", IE_Pressed, this, &AMainCharacter::Grab);
     PlayerInputComponent->BindAction("Grab", IE_Released, this, &AMainCharacter::Release);
 
+    PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AMainCharacter::Reload);
+
+    PlayerInputComponent->BindAction("ToggleCamera", IE_Pressed, this, &AMainCharacter::ToggleCamera);
+
 }
+
+void AMainCharacter::ToggleCamera()
+{
+    
+}
+
 
 
 void AMainCharacter::MoveForward(float Value)
@@ -459,4 +486,47 @@ FGenericTeamId AMainCharacter::GetGenericTeamId() const
     return FGenericTeamId(static_cast<uint8>(Team));
 }
 
+void AMainCharacter::TakeMag()
+{
+    if (!GetMesh() || !MagazineMesh)
+        return;
 
+    UStaticMeshComponent* MagComp = NewObject<UStaticMeshComponent>(this);
+    if (!MagComp)
+        return;
+
+    MagComp->SetStaticMesh(MagazineMesh);
+    MagComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    MagComp->RegisterComponent();
+
+    MagComp->AttachToComponent(
+        GetMesh(),
+        FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+        TEXT("hand_left")
+    );
+
+    NewMag = MagComp;
+}
+
+void AMainCharacter::Reload()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Reload pressed"));
+
+    if (!FP_Mesh || !ReloadMontage)
+        return;
+
+    UAnimInstance* AnimInstance = FP_Mesh->GetAnimInstance(); 
+    if (!AnimInstance)
+        return;
+
+    if (AnimInstance->Montage_IsPlaying(ReloadMontage))
+        return;
+    
+
+    float Len = AnimInstance->Montage_Play(ReloadMontage, 1.f);
+    UE_LOG(LogTemp, Warning, TEXT("Montage play result: %f"), Len);
+
+    Ammo = MaxAmmo;
+    if (HUDWidget)
+        HUDWidget->SetAmmo(Ammo);
+}
