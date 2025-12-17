@@ -16,6 +16,10 @@
 #include "DrawDebugHelpers.h"
 #include "Animation/AnimMontage.h"
 
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+
+
 
 
 // Sets default values
@@ -113,6 +117,16 @@ AMainCharacter::AMainCharacter()
     {
         UE_LOG(LogTemp, Error, TEXT("❌ Reload montage not found"));
     }
+
+    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+    CameraBoom->SetupAttachment(GetCapsuleComponent());
+    CameraBoom->TargetArmLength = 300.f;
+    CameraBoom->bUsePawnControlRotation = false;
+    CameraBoom->bInheritPitch = false;
+    CameraBoom->bInheritYaw = false;
+    CameraBoom->bInheritRoll = false;
+    CameraBoom->bDoCollisionTest = true;
+    CameraBoom->SetRelativeLocation(FVector(0.f, 0.f, 70.f));
 
 }
 
@@ -257,6 +271,15 @@ void AMainCharacter::Tick(float DeltaTime)
         PhysicsHandle->SetTargetLocation(TargetLocation);
     }
 
+    if (CameraMode == ECameraMode::ThirdPerson)
+    {
+        CameraBoom->SetRelativeRotation(
+            FRotator(TP_Pitch, TP_Yaw, 0.f)
+        );
+    }
+
+
+
 }
 
 // Called to bind functionality to input
@@ -267,7 +290,7 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     PlayerInputComponent->BindAxis("MoveForward", this, &AMainCharacter::MoveForward);
     PlayerInputComponent->BindAxis("MoveRight", this, &AMainCharacter::MoveRight);
 
-    PlayerInputComponent->BindAxis("Turn", this, &AMainCharacter::AddControllerYawInput);
+    PlayerInputComponent->BindAxis("Turn", this, &AMainCharacter::Turn);
     PlayerInputComponent->BindAxis("LookUp", this, &AMainCharacter::LookUp);
 
     PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMainCharacter::OnJumpPressed);
@@ -279,6 +302,9 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     PlayerInputComponent->BindAction("Grab", IE_Pressed, this, &AMainCharacter::Grab);
     PlayerInputComponent->BindAction("Grab", IE_Released, this, &AMainCharacter::Release);
     PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AMainCharacter::Reload);
+
+    PlayerInputComponent->BindAction("ToggleCamera", IE_Pressed, this, &AMainCharacter::ToggleCameraMode);
+
 
 }
 
@@ -305,12 +331,26 @@ void AMainCharacter::MoveRight(float Value)
 
 void AMainCharacter::LookUp(float Value)
 {
-    AddControllerPitchInput(Value);
+    if (CameraMode == ECameraMode::ThirdPerson)
+    {
+        TP_Pitch = FMath::Clamp(TP_Pitch + Value, -80.f, 20.f);
+    }
+    else
+    {
+        AddControllerPitchInput(Value);
+    }
 }
 
 void AMainCharacter::Turn(float Value)
 {
-    AddControllerYawInput(Value);
+    if (CameraMode == ECameraMode::ThirdPerson)
+    {
+        TP_Yaw += Value;
+    }
+    else
+    {
+        AddControllerYawInput(Value);
+    }
 }
 
 void AMainCharacter::BeginCrouch()
@@ -442,8 +482,6 @@ void AMainCharacter::Fire()
     }
 }
 
-
-
 float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
     AController* EventInstigator, AActor* DamageCauser)
 {
@@ -556,3 +594,47 @@ void AMainCharacter::Reload()
     if (HUDWidget)
         HUDWidget->SetAmmo(Ammo);
 }
+
+void AMainCharacter::ToggleCameraMode()
+{
+    if (CameraMode == ECameraMode::FirstPerson)
+    {
+        CameraMode = ECameraMode::ThirdPerson;
+
+        Camera->bUsePawnControlRotation = false;
+        Camera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+        Camera->AttachToComponent(
+            CameraBoom,
+            FAttachmentTransformRules::SnapToTargetNotIncludingScale
+        );
+
+        Controller->SetIgnoreLookInput(true);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("TP Camera | Yaw=%f Pitch=%f | BoomRot=%s | CamRot=%s | UsePCR=%s"),
+            TP_Yaw,
+            TP_Pitch,
+            *CameraBoom->GetComponentRotation().ToString(),
+            *Camera->GetComponentRotation().ToString(),
+            Camera->bUsePawnControlRotation ? TEXT("YES") : TEXT("NO")
+        );
+        CameraMode = ECameraMode::FirstPerson;
+
+        Camera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+        Camera->AttachToComponent(
+            GetMesh(),
+            FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+            TEXT("camera")
+        );
+
+        Camera->SetRelativeLocation(FVector::ZeroVector);
+        Camera->SetRelativeRotation(FRotator::ZeroRotator);
+
+        Camera->bUsePawnControlRotation = true;
+        Controller->SetIgnoreLookInput(false);
+
+    }
+}
+

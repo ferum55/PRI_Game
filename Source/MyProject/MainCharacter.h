@@ -15,12 +15,29 @@ class UCameraComponent;
 class USkeletalMesh;
 class UAnimInstance;
 
+class USpringArmComponent;
+
+class UPhysicsHandleComponent;
+class UInputComponent;
+class UAnimMontage;
+class AProjectile;
+class UmyHUD;
+
+
 UENUM(BlueprintType)
 enum class ETeams : uint8
 {
 	PlayersTeam UMETA(DisplayName = "PlayersTeam"),
 	EnemyTeam   UMETA(DisplayName = "EnemyTeam")
 };
+
+UENUM()
+enum class ECameraMode : uint8
+{
+	FirstPerson,
+	ThirdPerson
+};
+
 
 
 UCLASS()
@@ -124,4 +141,16 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	UAnimMontage* ReloadMontage = nullptr;
+
+	//third person
+	UPROPERTY()
+	ECameraMode CameraMode = ECameraMode::FirstPerson;
+
+	UPROPERTY(VisibleAnywhere)
+	class USpringArmComponent* CameraBoom;
+
+	float TP_Yaw = 0.f;
+	float TP_Pitch = -15.f;
+	void ToggleCameraMode();
+
 };
