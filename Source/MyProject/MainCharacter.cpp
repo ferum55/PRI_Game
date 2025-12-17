@@ -56,7 +56,7 @@ AMainCharacter::AMainCharacter()
         UE_LOG(LogTemp, Error, TEXT("❌ Failed to load AnimBlueprint"));
     }
 
-    FP_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Mesh"));
+    /*FP_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Mesh"));
     FP_Mesh->SetupAttachment(GetMesh());
     FP_Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -65,13 +65,13 @@ AMainCharacter::AMainCharacter()
     FP_Mesh->CastShadow = false;
 
     FP_Mesh->SetSkeletalMesh(GetMesh()->SkeletalMesh);
-    FP_Mesh->SetAnimInstanceClass(GetMesh()->AnimClass);
+    FP_Mesh->SetAnimInstanceClass(GetMesh()->AnimClass);*/
 
 
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-    Camera->SetupAttachment(FP_Mesh, TEXT("camera"));
-    Camera->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-    Camera->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
+
+    //Camera->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+    //Camera->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 
     Camera->bUsePawnControlRotation = true;
 
@@ -122,16 +122,76 @@ void AMainCharacter::BeginPlay()
     Super::BeginPlay();
 
 
+    UE_LOG(LogTemp, Warning, TEXT("=== BeginPlay MainCharacter ==="));
+
+    if (!GetMesh())
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetMesh() is NULL"));
+        return;
+    }
+
+    if (!Camera)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Camera is NULL"));
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Mesh: %s"), *GetMesh()->GetName());
+    UE_LOG(LogTemp, Warning, TEXT("SkeletalMesh asset: %s"),
+        GetMesh()->SkeletalMesh ? *GetMesh()->SkeletalMesh->GetName() : TEXT("NULL"));
+
+    const bool bHasCameraSocket = GetMesh()->DoesSocketExist(TEXT("camera"));
+    UE_LOG(LogTemp, Warning, TEXT("DoesSocketExist('camera'): %s"), bHasCameraSocket ? TEXT("YES") : TEXT("NO"));
+
+    if (bHasCameraSocket)
+    {
+        const FTransform SocketWorld = GetMesh()->GetSocketTransform(TEXT("camera"), RTS_World);
+        UE_LOG(LogTemp, Warning, TEXT("Socket 'camera' World: Loc=%s Rot=%s"),
+            *SocketWorld.GetLocation().ToString(),
+            *SocketWorld.Rotator().ToString());
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Before attach: Camera World Loc=%s Rot=%s"),
+        *Camera->GetComponentLocation().ToString(),
+        *Camera->GetComponentRotation().ToString());
+
+    UE_LOG(LogTemp, Warning, TEXT("Before attach: Camera Rel Loc=%s Rot=%s"),
+        *Camera->GetRelativeLocation().ToString(),
+        *Camera->GetRelativeRotation().ToString());
+
+    Camera->AttachToComponent(
+        GetMesh(),
+        FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+        TEXT("camera")
+    );
+
+    UE_LOG(LogTemp, Warning, TEXT("After attach: Camera AttachParent=%s SocketName=%s"),
+        Camera->GetAttachParent() ? *Camera->GetAttachParent()->GetName() : TEXT("NULL"),
+        *Camera->GetAttachSocketName().ToString());
+
+    UE_LOG(LogTemp, Warning, TEXT("After attach: Camera World Loc=%s Rot=%s"),
+        *Camera->GetComponentLocation().ToString(),
+        *Camera->GetComponentRotation().ToString());
+
+    UE_LOG(LogTemp, Warning, TEXT("After attach: Camera Rel Loc=%s Rot=%s"),
+        *Camera->GetRelativeLocation().ToString(),
+        *Camera->GetRelativeRotation().ToString());
+
+    UE_LOG(LogTemp, Warning, TEXT("Mesh World Loc=%s Rot=%s"),
+        *GetMesh()->GetComponentLocation().ToString(),
+        *GetMesh()->GetComponentRotation().ToString());
+
+    UE_LOG(LogTemp, Warning, TEXT("=== End BeginPlay MainCharacter ==="));
 
     if (IsLocallyControlled())
     {
 
-        FP_Mesh->HideBoneByName(TEXT("head"), EPhysBodyOp::PBO_None);
-        FP_Mesh->HideBoneByName(TEXT("neck_01"), EPhysBodyOp::PBO_None);
+        //FP_Mesh->HideBoneByName(TEXT("head"), EPhysBodyOp::PBO_None);
+        //FP_Mesh->HideBoneByName(TEXT("neck_01"), EPhysBodyOp::PBO_None);
 
-        GetMesh()->CastShadow = true;
-        GetMesh()->bCastHiddenShadow = true;
-        GetMesh()->SetOwnerNoSee(true);
+        //GetMesh()->CastShadow = true;
+        //GetMesh()->bCastHiddenShadow = true;
+        //GetMesh()->SetOwnerNoSee(true);
     }
 
     if (WeaponClass)
@@ -146,7 +206,7 @@ void AMainCharacter::BeginPlay()
         {
 
             CurrentWeapon->AttachToComponent(
-                FP_Mesh,
+                GetMesh(),
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
                 TEXT("weapon_socket")
             );
@@ -182,9 +242,9 @@ void AMainCharacter::BeginPlay()
 void AMainCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    if (FP_Mesh && FP_Mesh->GetAnimInstance())
+    if (GetMesh() && GetMesh()->GetAnimInstance())
     {
-        UMyAnimInstance* Anim = Cast<UMyAnimInstance>(FP_Mesh->GetAnimInstance());
+        UMyAnimInstance* Anim = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance());
         if (Anim && Controller)
         {
             const FRotator ControlRot = Controller->GetControlRotation();
@@ -478,10 +538,10 @@ void AMainCharacter::Reload()
 {
     UE_LOG(LogTemp, Warning, TEXT("Reload pressed"));
 
-    if (!FP_Mesh || !ReloadMontage)
+    if (!GetMesh() || !ReloadMontage)
         return;
 
-    UAnimInstance* AnimInstance = FP_Mesh->GetAnimInstance();
+    UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (!AnimInstance)
         return;
 
@@ -496,4 +556,3 @@ void AMainCharacter::Reload()
     if (HUDWidget)
         HUDWidget->SetAmmo(Ammo);
 }
-

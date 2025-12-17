@@ -46,8 +46,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* Camera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
-	USkeletalMeshComponent* FP_Mesh;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+	//USkeletalMeshComponent* FP_Mesh;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<AActor> WeaponClass;
