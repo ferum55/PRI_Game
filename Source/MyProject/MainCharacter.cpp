@@ -1,4 +1,5 @@
-﻿
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #include "MainCharacter.h"
 #include "Camera/CameraComponent.h"
@@ -14,16 +15,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Animation/AnimMontage.h"
-#include "GameFramework/SpringArmComponent.h"
-
-
 
 
 
 // Sets default values
 AMainCharacter::AMainCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
 
     GetMesh()->SetupAttachment(GetCapsuleComponent());
@@ -80,7 +78,7 @@ AMainCharacter::AMainCharacter()
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
     GetCharacterMovement()->bCrouchMaintainsBaseLocation = true;
     static ConstructorHelpers::FClassFinder<AActor> WeaponBP(
-        TEXT("/Game/FPS_Weapon_Bundle/BP_AK74U.BP_AK74U_C") 
+        TEXT("/Game/FPS_Weapon_Bundle/BP_AK74U.BP_AK74U_C")
     );
     if (WeaponBP.Succeeded())
     {
@@ -102,7 +100,7 @@ AMainCharacter::AMainCharacter()
         UE_LOG(LogTemp, Error, TEXT("❌ Failed to find BP_HUD at /Game/UI/BP_HUD.BP_HUD_C"));
     }
     PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
-    
+
     static ConstructorHelpers::FObjectFinder<UAnimMontage> ReloadMontageRef(
         TEXT("/Game/Anims/AM_Reload.AM_Reload")
     );
@@ -115,16 +113,16 @@ AMainCharacter::AMainCharacter()
     {
         UE_LOG(LogTemp, Error, TEXT("❌ Reload montage not found"));
     }
+
 }
 
 
 void AMainCharacter::BeginPlay()
 {
-	Super::BeginPlay();
- 
-    UE_LOG(LogTemp, Warning, TEXT("Pawn class: %s"), *GetClass()->GetName());
+    Super::BeginPlay();
 
-        
+
+
     if (IsLocallyControlled())
     {
 
@@ -146,11 +144,11 @@ void AMainCharacter::BeginPlay()
 
         if (CurrentWeapon)
         {
- 
+
             CurrentWeapon->AttachToComponent(
                 FP_Mesh,
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                TEXT("weapon_socket") 
+                TEXT("weapon_socket")
             );
         }
     }
@@ -169,22 +167,21 @@ void AMainCharacter::BeginPlay()
         {
             UE_LOG(LogTemp, Error, TEXT("HUDWidget is null"));
         }
-    }else UE_LOG(LogTemp, Error, TEXT("HUI"));
+    }
+    else UE_LOG(LogTemp, Error, TEXT("HUI"));
 
     GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
     GetCapsuleComponent()->SetGenerateOverlapEvents(true);
     SetCanBeDamaged(true);
-    DefaultCameraOffset = Camera->GetRelativeLocation();
-    Camera->SetRelativeLocation(DefaultCameraOffset + FVector(-8.f, 0.f, 0.f));
 
 }
 
 // Called every frame
 void AMainCharacter::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
     if (FP_Mesh && FP_Mesh->GetAnimInstance())
     {
         UMyAnimInstance* Anim = Cast<UMyAnimInstance>(FP_Mesh->GetAnimInstance());
@@ -205,7 +202,7 @@ void AMainCharacter::Tick(float DeltaTime)
 // Called to bind functionality to input
 void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     PlayerInputComponent->BindAxis("MoveForward", this, &AMainCharacter::MoveForward);
     PlayerInputComponent->BindAxis("MoveRight", this, &AMainCharacter::MoveRight);
@@ -221,18 +218,9 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMainCharacter::Fire);
     PlayerInputComponent->BindAction("Grab", IE_Pressed, this, &AMainCharacter::Grab);
     PlayerInputComponent->BindAction("Grab", IE_Released, this, &AMainCharacter::Release);
-
     PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AMainCharacter::Reload);
 
-    PlayerInputComponent->BindAction("ToggleCamera", IE_Pressed, this, &AMainCharacter::ToggleCamera);
-
 }
-
-void AMainCharacter::ToggleCamera()
-{
-    
-}
-
 
 
 void AMainCharacter::MoveForward(float Value)
@@ -271,7 +259,7 @@ void AMainCharacter::BeginCrouch()
         Crouch();
 
     }
-        
+
 
 }
 
@@ -340,16 +328,16 @@ void AMainCharacter::Fire()
 
         if (Dot >= AimConeDot)
         {
-           /* DrawDebugLine(
-                GetWorld(),
-                CamLoc,
-                Actor->GetActorLocation(),
-                FColor::Red,
-                false,
-                0.2f,
-                0,
-                1.f
-            );*/
+            /* DrawDebugLine(
+                 GetWorld(),
+                 CamLoc,
+                 Actor->GetActorLocation(),
+                 FColor::Red,
+                 false,
+                 0.2f,
+                 0,
+                 1.f
+             );*/
 
             if (AEnemyAI* Enemy = Cast<AEnemyAI>(Actor))
             {
@@ -407,12 +395,12 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
     Health -= Actual;
     Camera->PostProcessSettings.bOverride_SceneColorTint = true;
-    Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 0.f, 0.f, 1.f); 
+    Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 0.f, 0.f, 1.f);
 
     FTimerHandle ClearTintHandle;
     GetWorldTimerManager().SetTimer(ClearTintHandle, [this]()
         {
-            Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 1.f, 1.f, 1.f); 
+            Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 1.f, 1.f, 1.f);
         }, 0.1f, false);
 
     if (HUDWidget)
@@ -486,28 +474,6 @@ FGenericTeamId AMainCharacter::GetGenericTeamId() const
     return FGenericTeamId(static_cast<uint8>(Team));
 }
 
-void AMainCharacter::TakeMag()
-{
-    if (!GetMesh() || !MagazineMesh)
-        return;
-
-    UStaticMeshComponent* MagComp = NewObject<UStaticMeshComponent>(this);
-    if (!MagComp)
-        return;
-
-    MagComp->SetStaticMesh(MagazineMesh);
-    MagComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    MagComp->RegisterComponent();
-
-    MagComp->AttachToComponent(
-        GetMesh(),
-        FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-        TEXT("hand_left")
-    );
-
-    NewMag = MagComp;
-}
-
 void AMainCharacter::Reload()
 {
     UE_LOG(LogTemp, Warning, TEXT("Reload pressed"));
@@ -515,13 +481,13 @@ void AMainCharacter::Reload()
     if (!FP_Mesh || !ReloadMontage)
         return;
 
-    UAnimInstance* AnimInstance = FP_Mesh->GetAnimInstance(); 
+    UAnimInstance* AnimInstance = FP_Mesh->GetAnimInstance();
     if (!AnimInstance)
         return;
 
     if (AnimInstance->Montage_IsPlaying(ReloadMontage))
         return;
-    
+
 
     float Len = AnimInstance->Montage_Play(ReloadMontage, 1.f);
     UE_LOG(LogTemp, Warning, TEXT("Montage play result: %f"), Len);
@@ -530,3 +496,4 @@ void AMainCharacter::Reload()
     if (HUDWidget)
         HUDWidget->SetAmmo(Ammo);
 }
+

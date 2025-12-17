@@ -14,9 +14,6 @@
 class UCameraComponent;
 class USkeletalMesh;
 class UAnimInstance;
-class USpringArmComponent;
-class UCameraComponent;
-
 
 UENUM(BlueprintType)
 enum class ETeams : uint8
@@ -34,7 +31,7 @@ private:
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
 public:
-	
+
 	AMainCharacter();
 
 
@@ -43,7 +40,7 @@ protected:
 	ETeams Team = ETeams::PlayersTeam;
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
-	TSubclassOf<UAnimInstance> BodyAnimClass; 
+	TSubclassOf<UAnimInstance> BodyAnimClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Mesh")
 	USkeletalMesh* BodyMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -52,13 +49,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	USkeletalMeshComponent* FP_Mesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<AActor> WeaponClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	AActor* CurrentWeapon;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector MuzzleOffset;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -91,11 +88,11 @@ protected:
 	float GrabDistance = 250.f;
 
 	UPROPERTY(EditAnywhere)
-	float HoldDistance = 150.f; 
+	float HoldDistance = 150.f;
 
 
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -116,40 +113,15 @@ public:
 	void Grab();
 	void Release();
 
-
-
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 		AController* EventInstigator, AActor* DamageCauser) override;
 
 	float GetHealth() const { return Health; }
 	bool IsDead() const { return Health <= 0.f; }
 
-
-	UFUNCTION(BlueprintCallable)
-	void TakeMag();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon")
-	UStaticMeshComponent* NewMag= nullptr;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	UStaticMesh* MagazineMesh;
-
 	UFUNCTION()
 	void Reload();
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	UAnimMontage* ReloadMontage = nullptr;
-
-	FVector DefaultCameraOffset;
-
-	UPROPERTY(VisibleAnywhere)
-	USpringArmComponent* TP_SpringArm;
-
-	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* TP_Camera;
-
-	bool bThirdPerson = false;
-	void ToggleCamera();
-
-
 };
