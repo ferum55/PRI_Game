@@ -50,19 +50,36 @@ AEnemyAI::AEnemyAI()
 void AEnemyAI::BeginPlay()
 {
     Super::BeginPlay();
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] BeginPlay bTestEquip = %d"), bTestEquip);
 
-    Controller = Cast<AEnemyController>(GetController());
-    if (Controller)
+    if (bTestEquip)
     {
+        GetCharacterMovement()->DisableMovement();
+
+        GetWorld()->GetTimerManager().SetTimer(
+            TestEquipTimer,
+            this,
+            &AEnemyAI::ToggleTestEquip,
+            5.0f,
+            true
+        );
+    }
+    else {
+        Controller = Cast<AEnemyController>(GetController());
+        if (Controller)
+        {
+
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("AI: FAILED to cast AEnemyController in BeginPlay."));
+        }
+
+        PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyAI::OnActorPerceived);
 
     }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("AI: FAILED to cast AEnemyController in BeginPlay."));
-    }
 
-    PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyAI::OnActorPerceived);
-
+    
     WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
     RunSpeed = WalkSpeed * 2;
 
@@ -88,8 +105,10 @@ void AEnemyAI::BeginPlay()
             WeaponRef->AttachToComponent(
                 GetMesh(),
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                FName("hand_rSocket")
+                FName("back_gun")
             );
+            bWeaponEquipped = false;
+
         }
     }
 }
@@ -97,6 +116,9 @@ void AEnemyAI::BeginPlay()
 void AEnemyAI::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    if (bTestEquip)
+        return;
 
     if (!Controller) return;
     UBlackboardComponent* BB = Controller->GetBlackboardComponent();
@@ -140,7 +162,7 @@ void AEnemyAI::Tick(float DeltaTime)
     {
         TargetLostElapsed += DeltaTime;
 
-        if (TargetLostElapsed >= 4.f) 
+        if (TargetLostElapsed >= 4.f)
         {
             if (Controller)
             {
@@ -154,7 +176,7 @@ void AEnemyAI::Tick(float DeltaTime)
 
             PerceivedActor = nullptr;
             bHasLineOfSight = false;
-            TargetLostElapsed = 0.f; 
+            TargetLostElapsed = 0.f;
         }
     }
 
@@ -165,8 +187,6 @@ void AEnemyAI::Tick(float DeltaTime)
 
         HealthBarWidget->SetWorldLocation(HeadLocation);
     }
-
-
 }
 
 void AEnemyAI::Walk()
@@ -262,7 +282,6 @@ void AEnemyAI::ShootProjectileAtPlayer()
         if (FBoolProperty* Prop = FindFProperty<FBoolProperty>(Anim->GetClass(), TEXT("IsAttacking")))
         {
             Prop->SetPropertyValue_InContainer(Anim, true);
-            UE_LOG(LogTemp, Warning, TEXT("EnemyAI: IsAttacking = TRUE"));
         }
         else
         {
@@ -479,4 +498,146 @@ void AEnemyAI::PoisonTick()
         RemovePoison(); 
     }
 }
+
+void AEnemyAI::ToggleTestEquip()
+{
+    UE_LOG(LogTemp, Warning,
+        TEXT("[TEST] ToggleTestEquip | Equipped=%d | IsEquipping=%d"),
+        bWeaponEquipped, bIsEquipping
+    );
+
+    if (bIsEquipping)
+        return;
+
+    if (bWeaponEquipped)
+    {
+        StartUnequip();
+    }
+    else
+    {
+        StartEquip();
+    }
+}
+
+void AEnemyAI::StartEquip()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] StartEquip called"));
+
+    if (bIsEquipping || bWeaponEquipped)
+        return;
+
+    if (!EquipMontage)
+        return;
+
+    UAnimInstance* Anim = GetMesh()->GetAnimInstance();
+    if (!Anim)
+        return;
+
+    if (Anim->IsAnyMontagePlaying())
+        return;
+
+    bIsEquipping = true;
+    GetCharacterMovement()->DisableMovement();
+
+    float MontageLen = EquipMontage->GetPlayLength();
+
+    Anim->Montage_Play(EquipMontage, -1.0f);
+    Anim->Montage_SetPosition(EquipMontage, MontageLen);
+
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] StartEquip reverse from %f"), MontageLen);
+}
+
+
+
+
+void AEnemyAI::StartUnequip()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] StartUnequip called"));
+
+    if (bIsEquipping)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TEST] StartUnequip BLOCKED: bIsEquipping = true"));
+        return;
+    }
+
+    if (!bWeaponEquipped)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TEST] StartUnequip BLOCKED: bWeaponEquipped = false"));
+        return;
+    }
+
+    if (!UnequipMontage)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TEST] StartUnequip FAILED: UnequipMontage is NULL"));
+        return;
+    }
+
+    UAnimInstance* Anim = GetMesh()->GetAnimInstance();
+    if (!Anim)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TEST] StartUnequip FAILED: AnimInstance is NULL"));
+        return;
+    }
+
+    if (Anim->IsAnyMontagePlaying())
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TEST] StartUnequip BLOCKED: another montage is playing"));
+        return;
+    }
+
+    bIsEquipping = true;
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] StartUnequip: bIsEquipping set to TRUE"));
+
+    GetCharacterMovement()->DisableMovement();
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] StartUnequip: movement disabled"));
+
+    float Len = Anim->Montage_Play(UnequipMontage, 1.0f);
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] StartUnequip: Montage_Play length = %f"), Len);
+
+    if (Len <= 0.f)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TEST] StartUnequip FAILED: Montage did NOT start"));
+        bIsEquipping = false;
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    }
+}
+
+
+void AEnemyAI::ShowGun()
+{
+    if (!WeaponRef)
+        return;
+
+    WeaponRef->AttachToComponent(
+        GetMesh(),
+        FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+        FName("hand_rSocket")
+    );
+
+    bWeaponEquipped = true;
+}
+
+void AEnemyAI::HideGun()
+{
+    if (!WeaponRef)
+        return;
+
+    WeaponRef->AttachToComponent(
+        GetMesh(),
+        FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+        FName("back_gun")
+    );
+
+    bWeaponEquipped = false;
+}
+
+void AEnemyAI::OnEquipFinished()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[TEST] Equip finished"));
+
+    bIsEquipping = false;
+    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+}
+
+
 

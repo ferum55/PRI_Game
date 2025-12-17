@@ -101,6 +101,9 @@ protected:
 	float PoisonSlowMultiplier = 0.5f; // 50% speed
 	float PoisonDamagePerTick = 1.f;   // 1 HP per second
 
+	//
+	FTimerHandle TestEquipTimer;
+
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -148,5 +151,39 @@ public:
 
 	UPROPERTY()
 	AActor* WeaponRef;
+
+	//Anims
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug|Equip")
+	bool bTestEquip = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug|Equip")
+	bool bWeaponEquipped = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Debug|Equip")
+	bool bIsEquipping = false;
+
+	UFUNCTION()
+	void ToggleTestEquip();
+
+	UPROPERTY(EditAnywhere, Category = "Animation|Equip")
+	UAnimMontage* EquipMontage;
+
+	UPROPERTY(EditAnywhere, Category = "Animation|Equip")
+	UAnimMontage* UnequipMontage;
+
+	UFUNCTION(BlueprintCallable)
+	void StartEquip();
+
+	UFUNCTION(BlueprintCallable)
+	void StartUnequip();
+
+	UFUNCTION(BlueprintCallable)
+	void ShowGun();
+
+	UFUNCTION(BlueprintCallable)
+	void HideGun();
+
+	UFUNCTION(BlueprintCallable)
+	void OnEquipFinished();
 
 };
