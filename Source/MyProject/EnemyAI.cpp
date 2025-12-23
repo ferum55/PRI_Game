@@ -177,6 +177,12 @@ void AEnemyAI::Tick(float DeltaTime)
             PerceivedActor = nullptr;
             bHasLineOfSight = false;
             TargetLostElapsed = 0.f;
+            if (bWeaponEquipped && !bIsEquipping)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[AI] Target lost – start UNEQUIP"));
+                StartUnequip();
+            }
+
         }
     }
 
@@ -246,6 +252,11 @@ void AEnemyAI::OnActorPerceived(AActor* Actor, FAIStimulus Stimulus)
         BB->SetValueAsVector(C->GetLastKnownLocationKey(), Actor->GetActorLocation());
 
         PerceivedActor = Actor;
+        if (!bWeaponEquipped && !bIsEquipping)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[AI] Player detected – start EQUIP"));
+            StartEquip();
+        }
     }
     else
     {
